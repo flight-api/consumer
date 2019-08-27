@@ -1,30 +1,26 @@
 version: "2"
 services:
-  mongo:
-    image: mongo:3.2.4
-    ports:
-    - 27017:27017
-    command: --smallfiles
-
-  mongo-init:
-    build: ./mongo-init
-    links:
-      - mongo
-
-  mongo-client:
-    image: mongoclient/mongoclient
-    ports:
-    - 3030:3000
+  mongodb:
+    container_name: some-mongo-airline
+    image: mongo:latest
     environment:
-      - MONGOCLIENT_DEFAULT_CONNECTION_URL=mongodb://mongo:27017
-    links:
-      - mongo
-
-  spring-boot-mongo-docker:
-    image: flight-api/consumer
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/db:/data/db
     ports:
-      - 8080:8080
-    links:
-      - mongo
-    entrypoint: "java -Djava.security.egd=file:/dev/./urandom -jar /app.jar"
+      - 27017:27017
+    command: mongod --smallfiles --logpath=/dev/null # --quiet
+
+  app:
+    build: .
+    working_dir: .
+    volumes:
+      - ./app:/app
+      - ~/.m2:/root/.m2
+    expose:
+      - "8080"
+#    command: mvn clean spring-boot:run
+    depends_on:
+      - mongodb
 
